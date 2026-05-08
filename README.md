@@ -1,4 +1,8 @@
-# AG-QREW — Autonomous QA Agent Pipeline
+# AG-QREW — Agentic QREW
+
+> **AG-QREW** stands for **Agentic QREW** — an autonomous QA agent pipeline powered by Claude Code.
+
+
 
 A multi-agent QA automation system built for Claude Code. Point it at a sprint release note or BRD, press go, and receive a fully executed test cycle: test cases in TestRail, Playwright scripts that run, bugs in Jira or Confluence, and a signed-off report — all without writing a single test manually.
 
