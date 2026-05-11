@@ -169,6 +169,8 @@ Phase 0 — Setup (QA Lead, blocking)
   ├── .env check — credentials verified or collected from user
   ├── Document intake — Confluence fetch or pasted BRD/release note
   ├── Atlassian auth — MCP authentication check
+  ├── Browser preflight — browser_navigate + browser_snapshot on staging URL
+  │     if denied → surface to user immediately, do NOT proceed
   ├── API docs check — Swagger link or skip
   └── Sprint Health Scan — Jira signals → risk score (0-10 → LOW/MEDIUM/HIGH)
 
@@ -356,6 +358,7 @@ That's it. QA Lead handles the rest.
 | Variable | Purpose | Required |
 |----------|---------|----------|
 | `STAGING_URL` | Base URL of the environment under test | Yes |
+| `API_BASE_URL` | Base URL for API calls in specs (e.g. `https://api.yourapp.com`) | Yes |
 | `TEST_ADMIN_EMAIL` | Admin test account | Yes |
 | `TEST_ADMIN_PASSWORD` | Admin test account password | Yes |
 | `TEST_USER_EMAIL` | Standard user test account | Optional |
@@ -375,11 +378,12 @@ That's it. QA Lead handles the rest.
 
 ## Agent Autonomy Rules
 
-After the user types `proceed` on the test plan, the pipeline runs with **full autonomy** until the sign-off report. The three moments QA Lead will pause and speak to the user:
+After the user types `proceed` on the test plan, the pipeline runs with **full autonomy** until the sign-off report. The four moments QA Lead will pause and speak to the user:
 
 1. **Phase 0** — a required credential is missing from `.env`
-2. **Hard blocker** — staging unreachable >30 min, or Atlassian auth failing
-3. **Sign-off** — final report presented for approval
+2. **Phase 0** — Playwright MCP browser tools are not permitted (preflight check fails)
+3. **Hard blocker** — staging unreachable >30 min, or Atlassian auth failing
+4. **Sign-off** — final report presented for approval
 
 Every other decision (gap filling, import retries, TestRail section creation, bug classification, retest triggering) is handled autonomously and silently.
 
@@ -449,6 +453,8 @@ Accessibility and performance are non-blocking concerns that shouldn't fail a fu
 
 | Problem | Likely cause | Fix |
 |---------|-------------|-----|
+| Playwright MCP tools blocked mid-run | Browser permissions not in `settings.json` | Add Playwright tools to `.claude/settings.json` allowedTools — QA Lead now checks this in Phase 0 before spawning any agent |
+| `BLOCKED: qa-script-writer \| browser-snapshot-failed` | Browser access denied or returned empty accessibility tree | Same as above — grant permissions and re-run qa-script-writer Phase 1A |
 | `BLOCKED: qa-hawk \| auth-failed` | `.env` credentials wrong or staging account locked | Fix `TEST_ADMIN_EMAIL` / password in `.env` |
 | `IMPORT-FAILED: TC-NNN after 3 retries` | TestRail API key expired or rate limit | Check TestRail API key; pipeline continues, failed cases logged |
 | `Cannot find module '@playwright/test'` | Phase 0 npm install didn't run or failed | Re-trigger qa-script-writer; it will re-run Phase 0 (idempotent) |

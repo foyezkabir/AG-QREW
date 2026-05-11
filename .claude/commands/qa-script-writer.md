@@ -180,6 +180,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
+    // API_BASE_URL is available in all specs via process.env.API_BASE_URL
+    // Use it for request.get() calls — never hardcode https:// URLs in spec files
   },
   projects: [
     {
@@ -308,6 +310,18 @@ If login fails → note it in the exploration log and continue with unauthentica
 ---
 
 ### Step 2 — Explore each module (all modules in E2E-TASK)
+
+**BEFORE exploring any module — browser access gate (runs once)**
+
+Call `browser_navigate` on `{STAGING_URL}` then call `browser_snapshot`.
+
+Evaluate the result:
+- If the call throws a permission error, returns an empty accessibility tree (0 interactive elements), or the browser fails to load: write to `/qa/shared-task-list.txt`:
+  ```
+  BLOCKED: qa-script-writer browser-snapshot-failed | browser access denied or returned empty tree — cannot write locators from real DOM
+  ```
+  Then **stop**. Do NOT write any Locators files. Do NOT continue to Step 3. Guessed locators corrupt all downstream tiers and are worse than nothing.
+- If the snapshot returns interactive elements → proceed with module exploration below.
 
 For each module:
 
@@ -802,6 +816,8 @@ async getAlertsCard()          { return this.locators.getAlertsCard(); }
 | `new PageObject()` | Fixture from `base.ts` |
 | `page.waitForTimeout()` | Playwright auto-waiting |
 | Direct login in test | `storageState: 'auth.json'` |
+| Hardcoded `https://` URL | `process.env.API_BASE_URL` or `process.env.STAGING_URL` |
+| Pure API assertions (no browser) | Exclude — add `// API-ONLY` comment, belongs in qa-api-tester |
 
 ### Assertion hierarchy
 
@@ -810,6 +826,42 @@ async getAlertsCard()          { return this.locators.getAlertsCard(); }
 | Guard (hard) | `await expect(locator).toBeVisible()` | Critical gated state |
 | Checkpoint (soft) | `expect.soft(value).toBe(expected)` | Validations |
 | Soft block close | `expect(test.info().errors.length).toBe(0)` | After every soft block |
+
+### Step 2b — Spec self-review (runs immediately after writing each spec, before running it)
+
+Re-read the spec file and run these four grep checks. Fix every hit in-place before continuing.
+
+```bash
+# 1. No loops in test files
+grep -n "for\s*(" qa/automation/tests/{module}.spec.ts
+grep -n "while\s*(" qa/automation/tests/{module}.spec.ts
+
+# 2. No if/else in test files
+grep -n "\bif\s*(" qa/automation/tests/{module}.spec.ts
+
+# 3. No data transforms in test files
+grep -n "\.sort\b\|\.filter\b\|\.map\b\|\.reduce\b\|\.slice\b\|\.substring\b\|\.replace\b" qa/automation/tests/{module}.spec.ts
+
+# 4. No hardcoded API URLs
+grep -n "https://" qa/automation/tests/{module}.spec.ts
+```
+
+**Fix rules:**
+- Loops → move to `LoopHelper.repeatAction()` or a Page Object method
+- If/else → `ConditionalHelper.executeIfElse()` or remove branching entirely
+- Data transforms → static method in `DataHelper` or `{Module}Data`
+- Hardcoded `https://` → replace with `process.env.API_BASE_URL` or `process.env.STAGING_URL`
+
+Do NOT proceed to Step 3 until all four checks return zero hits.
+
+### Step 2c — API-only TC check (runs during Phase 2 Step 1, before writing any test)
+
+Before writing a test, apply this rule:
+- If the TC has zero browser navigation steps and all assertions target API response status, body shape, or field values → exclude it from the spec. Add this comment instead:
+  ```typescript
+  // [TC-{ID}] API-ONLY — excluded from UI spec. Belongs in qa-api-tester Postman collection.
+  ```
+- If any step says "Navigate to", "Click", or "Verify visible" → include it and write the spec normally.
 
 ### Step 3 — Run the spec
 

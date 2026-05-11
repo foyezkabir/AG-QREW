@@ -37,6 +37,7 @@ approved it. The sequence is strictly:
 
 ```
 Phase 0 → collect config & credentials  (ask user if missing)
+Phase 0 → browser preflight check       (see below — must pass before Phase 1)
 Phase 1 → generate test plan            (present to user, wait for "proceed")
 Phase 2 → spawn all agents              (ONE message, all fire simultaneously)
 ```
@@ -44,6 +45,25 @@ Phase 2 → spawn all agents              (ONE message, all fire simultaneously)
 Do NOT spawn any agent during Phase 0 or Phase 1.
 Do NOT spawn agents one by one — all go in a single message at Phase 2 start.
 If the user has not typed "proceed" on the test plan, the gate is closed.
+
+
+## Phase 0 Preflight — Browser Access Check (qa-lead only)
+
+Before spawning any agent, qa-lead must verify Playwright MCP browser tools
+are permitted. Do a single test call:
+
+```
+browser_navigate(url="{staging_url}")
+browser_snapshot()
+```
+
+If either call fails or returns a permission error → surface to user immediately:
+  "Playwright MCP browser tools are not permitted. Add them to .claude/settings.json
+   under allowedTools before proceeding."
+Do NOT spawn any agent until browser access is confirmed working.
+
+This prevents agents from discovering the blockage mid-run and silently
+degrading to guessed locators.
 
 
 ## Sub-Agent Silence Rules — agents NEVER prompt the user
@@ -151,8 +171,9 @@ The following are fully internal and silent — the user must never be prompted:
 ## The ONLY times to prompt the user
 
 1. Missing credentials or config during Phase 0 setup
-2. Hard blockers: staging completely unreachable >30 min, Atlassian auth failing
-3. Final sign-off: present the sign-off report and ask for approval
+2. Playwright MCP browser access fails in preflight check
+3. Hard blockers: staging completely unreachable >30 min, Atlassian auth failing
+4. Final sign-off: present the sign-off report and ask for approval
 
 After the user types "proceed" past any gap questions — FULL AUTONOMY until sign-off.
 
@@ -164,7 +185,7 @@ Fill this in during Phase 0 setup. QA Lead reads it at sprint start.
 | Setting | Value |
 |---|---|
 | Site URL | |
-| API Base | |
+| API Base URL (`API_BASE_URL` in .env) | |
 | Swagger / API docs URL | |
 | Confluence space | |
 | TestRail base URL | |

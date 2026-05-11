@@ -136,11 +136,27 @@ Title:          Verify that ...
 
 **Title field:**
 - Always starts with **"Verify that"** — never "Check that", "Ensure", "Test that", or any other phrasing
-- Describes one specific, observable behaviour
+- Describes one specific, **user-observable** behaviour — what the user sees or experiences
+- **NEVER mention API endpoints, HTTP methods, response fields, or internal implementation details**
+  - ❌ `Verify that the related products section returns products via GET /products/{id}/related`
+  - ❌ `Verify that GET /products/{id} populates the main content`
+  - ✅ `Verify that related products are displayed on the product detail page`
+  - ✅ `Verify that product name, price, and description are visible on the product detail page`
+- The title describes what a human tester opens, clicks, and observes — not how the system achieves it internally
 - Example: `Verify that submitting an empty required field displays a validation error message`
+
+**Steps field:**
+- Written as human actions: "Navigate to...", "Click...", "Enter... in the ... field", "Observe..."
+- **NEVER include API calls, endpoint names, or HTTP methods in steps**
+  - ❌ `Call GET /products/{id} and verify status 200`
+  - ✅ `Navigate to the product detail page for product "{name}"`
+- If the test needs specific data (e.g. a product with no related items), describe finding it in plain language: "Use a product that has no related products"
 
 **Expected field:**
 - Every bullet point starts with **"Should"** — never "The page shows", "It displays", "User sees"
+- Describes what the user sees on screen — never API response shape, status codes, or JSON fields
+  - ❌ `Should return HTTP 200 with an array of related product objects`
+  - ✅ `Should display at least one related product card below the main product`
 - Must be specific and verifiable — never vague like "Should work correctly" or "Should be fine"
 - Example: `Should display a red inline error message "This field is required" below the field`
 
@@ -149,6 +165,7 @@ Title:          Verify that ...
 - **Never** include the module name in the ID — no `TC-LOGIN-001`, no `TC-SETTINGS-PROFILE-001`
 - The filename (e.g. `login-tc.txt`) already identifies the module
 - TestRail assigns its own permanent IDs (e.g. C51094) after import — stored in `TestRail ID: [TR:{id}]`
+
 
 ### Required coverage per module
 
@@ -195,6 +212,7 @@ Title:          Verify that ...
 - Test Data lists concrete values or "N/A" — never leave it blank
 - Derive expected results from Section 6 of the test plan — do not guess
 - Do not reference code, class names, or database fields
+- **NEVER mention API endpoints, HTTP methods, or response fields anywhere in a TC** — not in the title, not in steps, not in expected results. A test case describes what a human does and observes in a browser, not how the backend works.
 - Test cases are atomic — one behaviour per case
 - No duplicate test cases
 
@@ -217,6 +235,7 @@ Re-read your TC file and challenge every element:
 | UI | Layout, label accuracy, button states? |
 | Mobile | 375px portrait, 667px landscape, 768px portrait explicitly tested? |
 | Error messages | Every error message tested with exact expected text? |
+| Language | Does any title, step, or expected result mention an API endpoint (`/api/...`, `GET`, `POST`), HTTP status code, or JSON field name? If yes → rewrite in plain user-facing language. |
 
 Add every missing case directly to the file. Do not report gaps — just fix them.
 
@@ -311,27 +330,71 @@ section_ui_id=$(echo "$CHILD" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
 | 12 | Tablet Chrome |
 
 For every TC block in the module's `.txt` file, determine the `target_section_id` from the
-Type-to-section mapping (Step 5a Step 3), then POST:
+Type-to-section mapping (Step 5a Step 3), then build and POST the payload using the
+**bash heredoc + `jq`** pattern below. This is the ONLY safe way to produce real newline
+characters (0x0A) in JSON — never use `"\n"` as a literal two-character escape in a
+shell variable, because the shell passes it verbatim as backslash + n.
 
+**Field formatting rules (apply before building JSON):**
+
+| Field | Format |
+|---|---|
+| `custom_preconds` | One condition per line, each prefixed `- `. Join lines with a real newline (0x0A). |
+| `custom_steps` | Numbered list `1. ... \n2. ...`. One action per line, joined with real newlines. |
+| `custom_testdata` | `key: value` pairs, one per line, real newlines. |
+| `custom_expected` | One outcome per line, each prefixed `- `. Real newlines. No "Should" in stored text — strip the leading "Should " when writing to TestRail. |
+
+**Build the JSON payload using `jq` (handles escaping automatically):**
+
+```bash
+# Build multi-line field values as bash variables using $'...' syntax for real newlines
+preconds=$'- User is on the /login page\n- Valid credentials exist'
+steps=$'1. Navigate to /login\n2. Enter email in Email field\n3. Click Sign In'
+testdata=$'Email: admin@test.com\nPassword: secret123'
+expected=$'- Redirects to /dashboard\n- Welcome message is visible'
+
+# Use jq to produce correctly-escaped JSON — never build JSON by hand with string concatenation
+payload=$(jq -n \
+  --arg title   "Verify that valid admin login redirects to dashboard" \
+  --argjson type_id    6 \
+  --argjson priority_id 3 \
+  --arg preconds "$preconds" \
+  --arg steps    "$steps" \
+  --arg testdata "$testdata" \
+  --arg expected "$expected" \
+  '{
+    title:          $title,
+    type_id:        $type_id,
+    priority_id:    $priority_id,
+    custom_preconds: $preconds,
+    custom_steps:   $steps,
+    custom_testdata: $testdata,
+    custom_expected: $expected,
+    custom_case_environment: 1,
+    custom_case_platform: [1,5,7,10]
+  }')
+
+# POST using the built payload
+result=$(curl -s -X POST \
+  "${TESTRAIL_BASE_URL}/index.php?/api/v2/add_case/${target_section_id}" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Basic $(echo -n "${TESTRAIL_USERNAME}:${TESTRAIL_API_KEY}" | base64)" \
+  -d "$payload")
 ```
-POST {TESTRAIL_BASE_URL}/index.php?/api/v2/add_case/{target_section_id}
-Authorization: Basic {base64(TESTRAIL_USERNAME:TESTRAIL_API_KEY)}
-Content-Type: application/json
 
-{
-  "title": "{Title field from TC block — the full 'Verify that...' text}",
-  "type_id": {6=Functional, 13=UI, 14=Positive, 15=Negative},
-  "priority_id": {3=High, 2=Medium, 1=Low},
-  "custom_preconds": "{Preconditions}",
-  "custom_steps": "{Steps as numbered text}",
-  "custom_testdata": "{Test Data field from TC block}",
-  "custom_expected": "{Expected — Should... bullets}",
-  "custom_case_environment": 1,
-  "custom_case_platform": [1, 5, 7, 10]
-}
+**Why `jq` and not manual JSON string construction:**
+- Shell string concatenation (`"...\n..."`) produces literal backslash-n, not a newline byte.
+- `jq --arg` automatically escapes the variable content to valid JSON string encoding, so real newlines in the bash variable become `\n` in JSON — which TestRail then decodes to real newlines when displaying.
+- Never build JSON by hand with `echo '{"field": "'"$var"'"}'` — quoting is fragile and produces wrong output for multi-line values.
+
+**Verify `jq` is available:**
+```bash
+command -v jq || (echo "jq not found — install with: brew install jq" && exit 1)
 ```
 
-**Import sequentially with 500ms pacing and retry protection** — never batch-fire in parallel (causes TestRail rate-limit failures):
+**Import sequentially with 500ms pacing and retry protection** — never batch-fire in parallel (causes TestRail rate-limit failures).
+
+Build each `$payload` using the `jq` pattern above, then pass it to `post_case`:
 
 ```bash
 post_case() {
@@ -349,12 +412,13 @@ post_case() {
   echo "IMPORT-FAILED: ${label} after 3 retries"
 }
 
-# Call for each TC block — sleep 500ms between cases
-post_case "${target_section_id}" "${payload_tc001}" "TC-001"
+# Build payload with jq (real newlines), then call post_case
+payload_tc001=$(jq -n --arg title "..." --arg preconds $'...' --arg steps $'1. ...\n2. ...' --arg expected $'- ...' \
+  '{ title: $title, type_id: 6, priority_id: 3, custom_preconds: $preconds, custom_steps: $steps, custom_expected: $expected, custom_case_environment: 1, custom_case_platform: [1,5,7,10] }')
+
+post_case "${section_ui_id}" "${payload_tc001}" "TC-001"
 sleep 0.5
-post_case "${target_section_id}" "${payload_tc002}" "TC-002"
-sleep 0.5
-# continue for all TC blocks in the module
+# repeat for all TC blocks
 ```
 
 Write a `PROGRESS:` signal to `/qa/shared-task-list.txt` after every 5 cases imported:
