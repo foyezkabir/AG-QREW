@@ -228,6 +228,34 @@ Operates in four modes triggered by QA Lead:
 
 **Bug report format:** Every bug includes Feature, Severity (with 5-dimensional matrix), Oracle, TC-ID, Title, Steps, Expected, Actual, Screenshot, and Video (if available from qa-script-writer's Playwright report).
 
+```
+BUG-001
+-------
+Feature:      Login
+Severity:     High
+  Impact:     Core workflow blocked for all users
+  Frequency:  Reproducible 100%
+  Scope:      All browsers
+  Data risk:  None
+  Workaround: None
+Oracle:       FEW HICCUPPS - Claims (docs say error message appears below form)
+TC-ID:        TC-004 (TestRail: C51097)
+Title:        Error message does not appear when login fails with wrong password
+
+Steps:
+  1. Navigate to /login
+  2. Enter admin@test.com in Email
+  3. Enter wrongpassword in Password
+  4. Click Sign In
+
+Expected:     "Invalid email or password" displayed below the form
+Actual:       Page reloads silently - no error message shown
+Screenshot:   screenshots/bug-001.png
+Video:        playwright-report/traces/login-fail.webm
+TestRail:     C51097 marked Failed
+Jira:         AUTO-412
+```
+
 ---
 
 ### qa-api-tester
