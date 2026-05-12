@@ -1,16 +1,16 @@
-# AG-QREW — Agentic QREW
+# AG-QREW - Agentic QREW
 
-> **AG-QREW** stands for **Agentic QREW** — an autonomous QA agent pipeline powered by Claude Code.
+> **AG-QREW** stands for **Agentic QREW** - an autonomous QA agent pipeline powered by Claude Code.
 
 
 
-A multi-agent QA automation system built for Claude Code. Point it at any business document — Jira story, epic, BRD, PR, release note, or paste content directly — press go, and receive a fully executed test cycle: test cases in TestRail, Playwright scripts that run, bugs in Jira or Confluence, and a signed-off report — all without writing a single test manually.
+A multi-agent QA automation system built for Claude Code. Point it at any business document - Jira story, epic, BRD, PR, release note, or paste content directly - press go, and receive a fully executed test cycle: test cases in TestRail, Playwright scripts that run, bugs in Jira or Confluence, and a signed-off report - all without writing a single test manually.
 
 ---
 
 ## What it is
 
-AG-QREW is a team of five specialised AI agents that coordinate through a shared task list to execute a complete sprint QA cycle. Each agent owns a specific domain, runs in the background in parallel, and communicates only through structured signals. No agent ever asks the user a question — only the orchestrator (QA Lead) does, and only at three defined points.
+AG-QREW is a team of five specialised AI agents that coordinate through a shared task list to execute a complete sprint QA cycle. Each agent owns a specific domain, runs in the background in parallel, and communicates only through structured signals. No agent ever asks the user a question - only the orchestrator (QA Lead) does, and only at three defined points.
 
 **One human decision.** After the test plan is generated, the user types `proceed`. Everything from test case writing to bug reporting to sign-off is fully autonomous from that point.
 
@@ -62,7 +62,7 @@ AG-QREW is a team of five specialised AI agents that coordinate through a shared
 
 - Fetches sprint documentation from Confluence (or accepts pasted content)
 - Runs a Sprint Health Scan against Jira to score risk (LOW / MEDIUM / HIGH)
-- Analyses any business document for requirements gaps — Jira story, epic, BRD, PR, release note, or pasted content
+- Analyses any business document for requirements gaps - Jira story, epic, BRD, PR, release note, or pasted content
 - Writes a full SFDIPOT test plan covering all in-scope modules
 - Creates the TestRail milestone, project, and suite
 - Spawns all agents simultaneously after plan approval
@@ -83,8 +83,8 @@ AG-QREW is a team of five specialised AI agents that coordinate through a shared
   ```
   Module (parent)
     ├── UI
-    ├── Functional — Positive
-    ├── Functional — Negative / Boundary
+    ├── Functional - Positive
+    ├── Functional - Negative / Boundary
     └── Mobile Responsive
   ```
 - Imports cases sequentially (500ms pacing, 3 retries, PROGRESS every 5 cases)
@@ -143,30 +143,30 @@ Follows a 4-tier architecture:
 
 | Tier | Folder | Contains |
 |------|--------|----------|
-| 1 | `locators/` | Selectors only — arrow function properties |
-| 2 | `pages/` | Interaction methods — click*, fill*, get*, verify* |
+| 1 | `locators/` | Selectors only - arrow function properties |
+| 2 | `pages/` | Interaction methods - click*, fill*, get*, verify* |
 | 3 | `datas/` | Static test data + Faker factories |
-| 4 | `tests/` | Pure test specs — max 10 lines, no logic |
+| 4 | `tests/` | Pure test specs - max 10 lines, no logic |
 
-**Phase 0 — Bootstrap** (before any code is written):
+**Phase 0 - Bootstrap** (before any code is written):
 - `npm init`, install `@playwright/test @types/node @faker-js/faker @axe-core/playwright`
 - Creates `tsconfig.json`, `playwright.config.ts`, installs Chromium + WebKit
 - Verifies `npx tsc --noEmit` reaches zero errors
 
-**Phase 1A — Exploration** (runs parallel to qa-tc-writer):
+**Phase 1A - Exploration** (runs parallel to qa-tc-writer):
 - Uses `browser_snapshot` (accessibility tree) to extract all interactive elements
 - Writes Locators and Page Objects for every module
 
-**Phase 1B — Test Data** (starts per module as `TC-READY` signals arrive):
+**Phase 1B - Test Data** (starts per module as `TC-READY` signals arrive):
 - Writes `*Data.ts` (static reference values) and `*Factory.ts` (Faker-generated inputs)
 
-**Phase 2 — Specs** (one module at a time from TC files):
+**Phase 2 - Specs** (one module at a time from TC files):
 - Maps every `TC-NNN` block to a `[TC-NNN] (TR:xxx): Verify that...` test
-- Mobile TCs tagged `@mobile` — Playwright config routes them to iPhone 13, Pixel 5, iPad viewports
+- Mobile TCs tagged `@mobile` - Playwright config routes them to iPhone 13, Pixel 5, iPad viewports
 - Negative/error-state tests use `NetworkHelper` to mock API failures via `page.route()`
-- Every `navigate()` runs a WCAG 2.1 AA axe scan and a 3s load time check (both soft — log only)
+- Every `navigate()` runs a WCAG 2.1 AA axe scan and a 3s load time check (both soft - log only)
 
-**Phase 3 — Reconciliation + Quality**:
+**Phase 3 - Reconciliation + Quality**:
 - Coverage gap fill, TR ID resolution
 - Flakiness detection via `--repeat-each=3`
 - Generates `.github/workflows/playwright.yml` CI config
@@ -182,10 +182,10 @@ Operates in four modes triggered by QA Lead:
 
 | Mode | Trigger | What it does |
 |------|---------|--------------|
-| 0 — Environment | `HAWK-TASK \| mode: environment` | Validates all URLs, auth, seed data before any testing begins |
-| 1 — Smoke | `HAWK-TASK \| mode: smoke` | Runs the core happy path; records Pass/Fail to every TestRail case in the module immediately |
-| 2 — Explore | `HAWK-TASK \| mode: explore` | Full SFDIPOT + FEW HICCUPPS oracle testing; posts TestRail result per TC as executed; links each bug to its TestRail case (status=Failed) |
-| 3 — Retest | `RETEST: {JIRA-KEY}` | Re-runs reproduction steps after a fix; updates TestRail and Jira |
+| 0 - Environment | `HAWK-TASK \| mode: environment` | Validates all URLs, auth, seed data before any testing begins |
+| 1 - Smoke | `HAWK-TASK \| mode: smoke` | Runs the core happy path; records Pass/Fail to every TestRail case in the module immediately |
+| 2 - Explore | `HAWK-TASK \| mode: explore` | Full SFDIPOT + FEW HICCUPPS oracle testing; posts TestRail result per TC as executed; links each bug to its TestRail case (status=Failed) |
+| 3 - Retest | `RETEST: {JIRA-KEY}` | Re-runs reproduction steps after a fix; updates TestRail and Jira |
 
 **Bug report format:** Every bug includes Feature, Severity (with 5-dimensional matrix), Oracle, TC-ID, Title, Steps, Expected, Actual, Screenshot, and Video (if available from qa-script-writer's Playwright report).
 
@@ -206,23 +206,23 @@ Operates in four modes triggered by QA Lead:
 ## Full Workflow
 
 ```
-Phase 0 — Setup (QA Lead, blocking)
-  ├── .env check — credentials verified or collected from user
-  ├── Document intake — Confluence fetch or pasted BRD/release note
-  ├── Atlassian auth — MCP authentication check
-  ├── Browser preflight — browser_navigate + browser_snapshot on staging URL
+Phase 0 - Setup (QA Lead, blocking)
+  ├── .env check - credentials verified or collected from user
+  ├── Document intake - Confluence fetch or pasted BRD/release note
+  ├── Atlassian auth - MCP authentication check
+  ├── Browser preflight - browser_navigate + browser_snapshot on staging URL
   │     if denied → surface to user immediately, do NOT proceed
-  ├── API docs check — Swagger link or skip
-  └── Sprint Health Scan — Jira signals → risk score (0-10 → LOW/MEDIUM/HIGH)
+  ├── API docs check - Swagger link or skip
+  └── Sprint Health Scan - Jira signals → risk score (0-10 → LOW/MEDIUM/HIGH)
 
-Phase 1 — Test Plan (QA Lead, blocking)
+Phase 1 - Test Plan (QA Lead, blocking)
   ├── Gap analysis on source document (Jira story, epic, BRD, PR, release note, or paste)
   ├── Write qa/test-plan-sprint{N}.txt (SFDIPOT coverage per module)
   ├── Self-verification round on the plan
-  └── ▶ Present to user — wait for "proceed"
+  └── ▶ Present to user - wait for "proceed"
 
-Phase 2 — Agents spawn (QA Lead, ONE message, all simultaneous)
-  ├── qa-hawk        → mode: environment (health check — gates everyone)
+Phase 2 - Agents spawn (QA Lead, ONE message, all simultaneous)
+  ├── qa-hawk        → mode: environment (health check - gates everyone)
   ├── qa-tc-writer   → write test cases
   ├── qa-script-writer → Phase 0 bootstrap + explore site
   └── qa-api-tester  → build and run API tests
@@ -261,16 +261,16 @@ qa-hawk (smoke + explore, triggered per module by QA Lead):
     SFDIPOT dimensions + FEW HICCUPPS oracles
     log bugs → POST Failed to matching TestRail case immediately
 
-Phase 3 — Consolidation (QA Lead, silent)
+Phase 3 - Consolidation (QA Lead, silent)
   ├── Read DONE signals from all agents
   ├── Validate bug report format
   ├── Push bugs to Jira / Confluence
   └── Trigger retests on fixed issues
 
-Phase 4 — Sign-off (QA Lead → user)
+Phase 4 - Sign-off (QA Lead → user)
   ├── Decision gate record (pass rate, bugs, coverage, flakiness)
   ├── AUTOMATION QUALITY section (flaky list, perf flags, a11y summary)
-  └── ▶ Present sign-off report — PASS / CONDITIONAL / FAIL
+  └── ▶ Present sign-off report - PASS / CONDITIONAL / FAIL
 ```
 
 ---
@@ -318,21 +318,21 @@ Agents coordinate exclusively through `qa/shared-task-list.txt`. No direct agent
 
 | Signal | Written by | Read by | Meaning |
 |--------|-----------|---------|---------|
-| `TC-READY: {module}` | qa-tc-writer | qa-script-writer | TC file ready — start data + spec |
+| `TC-READY: {module}` | qa-tc-writer | qa-script-writer | TC file ready - start data + spec |
 | `MODULE-DONE: qa-tc-writer \| {module}` | qa-tc-writer | QA Lead | Module cases written + verified |
-| `SECTION-DONE: {module} \| case_ids: ...` | qa-tc-writer | qa-hawk, QA Lead | Imported — hawk reads case_ids for smoke |
+| `SECTION-DONE: {module} \| case_ids: ...` | qa-tc-writer | qa-hawk, QA Lead | Imported - hawk reads case_ids for smoke |
 | `PROGRESS: qa-tc-writer \| {module} \| N/total` | qa-tc-writer | QA Lead | Import progress (every 5 cases) |
-| `META: testrail_run_id={id}` | qa-tc-writer | qa-hawk | Run created — flush pending TR results |
-| `HAWK: environment \| READY` | qa-hawk | QA Lead | Site healthy — unblocks all agents |
+| `META: testrail_run_id={id}` | qa-tc-writer | qa-hawk | Run created - flush pending TR results |
+| `HAWK: environment \| READY` | qa-hawk | QA Lead | Site healthy - unblocks all agents |
 | `HAWK: smoke \| {module} \| PASS/FAIL` | qa-hawk | QA Lead | Smoke gate result |
-| `HAWK: smoke-result-pending \| {module}` | qa-hawk | qa-hawk | Held — waiting for run_id |
-| `HAWK: tr-result-pending \| {module}` | qa-hawk | qa-hawk | Bug result held — waiting for run_id |
+| `HAWK: smoke-result-pending \| {module}` | qa-hawk | qa-hawk | Held - waiting for run_id |
+| `HAWK: tr-result-pending \| {module}` | qa-hawk | qa-hawk | Bug result held - waiting for run_id |
 | `HAWK: explore \| {module} \| ...` | qa-hawk | QA Lead | Explore complete + confidence level |
 | `FLAKY: qa-hawk \| {module} \| ...` | qa-hawk | QA Lead | Intermittent failure found |
 | `FLAKY: qa-script-writer \| {module} \| ...` | qa-script-writer | QA Lead | Flaky spec detected (3-run check) |
 | `PROGRESS: qa-script-writer \| Phase 0 bootstrap complete` | qa-script-writer | QA Lead | Bootstrap done |
 | `PROGRESS: qa-script-writer \| CI config generated` | qa-script-writer | QA Lead | GitHub Actions yaml written |
-| `BLOCKED: {agent} \| {reason}` | any agent | QA Lead | Hard blocker — only QA Lead surfaces to user |
+| `BLOCKED: {agent} \| {reason}` | any agent | QA Lead | Hard blocker - only QA Lead surfaces to user |
 | `DONE: qa-tc-writer` | qa-tc-writer | QA Lead | All modules imported, run created |
 | `DONE: qa-script-writer \| ... \| matrix: ...` | qa-script-writer | QA Lead | Specs running, artifacts ready |
 | `DONE: qa-hawk` | qa-hawk | QA Lead | Testing complete, bugs filed |
@@ -349,18 +349,18 @@ Agents coordinate exclusively through `qa/shared-task-list.txt`. No direct agent
 | **TestRail** | Sections, test cases, test run, per-case results | Optional (skipped if no URL) |
 | **Postman** | Collection creation, API test import, workspace management | Optional |
 | **Newman** | Run Postman collection via CLI | Optional (auto-installed by qa-api-tester) |
-| **GitHub Actions** | CI config generated automatically (Playwright suite) | Generated — no setup needed |
+| **GitHub Actions** | CI config generated automatically (Playwright suite) | Generated - no setup needed |
 
 ---
 
 ## Prerequisites
 
-- **Claude Code** — CLI or desktop app
+- **Claude Code** - CLI or desktop app
 - **MCP Plugins installed and enabled:**
-  - `Atlassian` — for Confluence + Jira access
-  - `Playwright` — for browser automation during qa-hawk exploration
-  - `Postman` — for API collection management
-- **Node.js 18+** — for Playwright automation (qa-script-writer installs everything else)
+  - `Atlassian` - for Confluence + Jira access
+  - `Playwright` - for browser automation during qa-hawk exploration
+  - `Postman` - for API collection management
+- **Node.js 18+** - for Playwright automation (qa-script-writer installs everything else)
 - A staging/QA environment URL accessible from the machine running Claude Code
 
 ---
@@ -421,10 +421,10 @@ That's it. QA Lead handles the rest.
 
 After the user types `proceed` on the test plan, the pipeline runs with **full autonomy** until the sign-off report. The four moments QA Lead will pause and speak to the user:
 
-1. **Phase 0** — a required credential is missing from `.env`
-2. **Phase 0** — Playwright MCP browser tools are not permitted (preflight check fails)
-3. **Hard blocker** — staging unreachable >30 min, or Atlassian auth failing
-4. **Sign-off** — final report presented for approval
+1. **Phase 0** - a required credential is missing from `.env`
+2. **Phase 0** - Playwright MCP browser tools are not permitted (preflight check fails)
+3. **Hard blocker** - staging unreachable >30 min, or Atlassian auth failing
+4. **Sign-off** - final report presented for approval
 
 Every other decision (gap filling, import retries, TestRail section creation, bug classification, retest triggering) is handled autonomously and silently.
 
@@ -494,8 +494,8 @@ Accessibility and performance are non-blocking concerns that shouldn't fail a fu
 
 | Problem | Likely cause | Fix |
 |---------|-------------|-----|
-| Playwright MCP tools blocked mid-run | Browser permissions not in `settings.json` | Add Playwright tools to `.claude/settings.json` allowedTools — QA Lead now checks this in Phase 0 before spawning any agent |
-| `BLOCKED: qa-script-writer \| browser-snapshot-failed` | Browser access denied or returned empty accessibility tree | Same as above — grant permissions and re-run qa-script-writer Phase 1A |
+| Playwright MCP tools blocked mid-run | Browser permissions not in `settings.json` | Add Playwright tools to `.claude/settings.json` allowedTools - QA Lead now checks this in Phase 0 before spawning any agent |
+| `BLOCKED: qa-script-writer \| browser-snapshot-failed` | Browser access denied or returned empty accessibility tree | Same as above - grant permissions and re-run qa-script-writer Phase 1A |
 | `BLOCKED: qa-hawk \| auth-failed` | `.env` credentials wrong or staging account locked | Fix `TEST_ADMIN_EMAIL` / password in `.env` |
 | `IMPORT-FAILED: TC-NNN after 3 retries` | TestRail API key expired or rate limit | Check TestRail API key; pipeline continues, failed cases logged |
 | `Cannot find module '@playwright/test'` | Phase 0 npm install didn't run or failed | Re-trigger qa-script-writer; it will re-run Phase 0 (idempotent) |
