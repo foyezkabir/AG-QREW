@@ -77,6 +77,27 @@ flowchart TD
 
 ---
 
+## Coverage Heuristics
+
+AG-QREW uses two well-known exploratory testing heuristics to drive test plan generation and bug hunting.
+
+**SFDIPOT** — product coverage outline (James Bach)
+
+| Letter | Stands for | What to test |
+|--------|------------|--------------|
+| **S** | Structure | Everything the product is made of — UI elements, code, files, data stores |
+| **F** | Function | What the product does — features, behaviours, outputs |
+| **D** | Data | Inputs, outputs, stored values — boundaries, types, formats, nulls |
+| **I** | Interface | Every channel the product communicates through — APIs, UI, integrations |
+| **P** | Platform | The environment it runs on — OS, browser, device, DB, runtime version |
+| **O** | Operations | How it will be used — user workflows, admin tasks, error recovery |
+| **T** | Time | Anything time-related — timeouts, scheduling, concurrency, performance |
+
+**FEW HICCUPPS** — consistency oracles (James Bach & Michael Bolton) — used by qa-hawk to decide whether observed behaviour is a bug:
+`Familiar · Explainability · World · History · Image · Comparable products · Claims · User · Product · Purpose · Standards`
+
+---
+
 ## The Five Agents
 
 ### QA Lead
