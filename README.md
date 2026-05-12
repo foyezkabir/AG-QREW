@@ -130,17 +130,21 @@ Title:          Verify that the user is redirected to the dashboard after login
 Type:           Functional
 Priority:       High
 Preconditions:  User account exists and is active
+
 Steps:
   1. Navigate to /login
   2. Enter 'admin@test.com' in the Email field
   3. Enter valid password in the Password field
   4. Click the Sign In button
+
 Test Data:
   - Email: admin@test.com
   - Password: Test@1234
+
 Expected:
   - Should redirect to /dashboard
   - Should display the user's name in the header
+
 TestRail ID:    [pending]
 
 
@@ -150,17 +154,21 @@ Title:          Verify that an error message is shown when the password is incor
 Type:           Negative
 Priority:       High
 Preconditions:  User account exists
+
 Steps:
   1. Navigate to /login
   2. Enter 'admin@test.com' in the Email field
   3. Enter 'wrongpassword' in the Password field
   4. Click the Sign In button
+
 Test Data:
   - Email: admin@test.com
   - Password: wrongpassword
+
 Expected:
   - Should display "Invalid email or password" below the form
   - Should remain on the /login page
+
 TestRail ID:    [pending]
 ```
 
