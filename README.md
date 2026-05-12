@@ -20,49 +20,37 @@ AG-QREW is a team of five specialised AI agents that coordinate through a shared
 
 ```mermaid
 flowchart TD
-    USER([User]) -->|"/qa-lead + doc link or paste"| LEAD
-
-    subgraph LEAD["QA Lead - orchestrator - only agent that talks to user"]
-        P0["Phase 0: Setup\n.env check · doc intake · Atlassian auth · browser preflight"]
-        P1["Phase 1: Test Plan\ngap analysis · SFDIPOT plan · self-verify · present to user"]
-        P3["Phase 3: Consolidation\npush bugs · Jira updates · trigger retests"]
-        P4["Phase 4: Sign-off Report\nPASS / CONDITIONAL / FAIL"]
-        P0 --> P1
-        P3 --> P4
-    end
-
-    P0 -->|"preflight blocked"| ERR(["Surface to user\nadd Playwright MCP permissions"])
-    P1 -->|"user types 'proceed'"| SPAWN
-
+    USER([User])
+    P0["Phase 0 · Setup\n.env check · doc intake · Atlassian auth · browser preflight"]
+    ERR(["Surface to user\nadd Playwright MCP permissions"])
+    P1["Phase 1 · Test Plan\ngap analysis · SFDIPOT plan · self-verify · present to user"]
     SPAWN(["Spawn all agents\none message · fire simultaneously"])
 
-    SPAWN --> HAWK & TCW & SCR & API
-
-    subgraph HAWK["qa-hawk"]
-        H["Mode 0: Environment check\nMode 1: Smoke per module\nMode 2: SFDIPOT explore + bug log"]
+    subgraph PARALLEL["Phase 2 — Parallel Execution  |  QA Lead monitors shared-task-list.txt"]
+        direction LR
+        HAWK["qa-hawk\n──────────────────\nMode 0: Env check\nMode 1: Smoke per module\nMode 2: SFDIPOT explore\n+ bug log"]
+        TCW["qa-tc-writer\n──────────────────\nWrite TCs per module\n2-round gap check\nImport to TestRail\nCreate sprint run"]
+        SCR["qa-script-writer\n──────────────────\nBootstrap · explore site\nWrite specs from TCs\nRun · flakiness check\nCI yaml"]
+        API["qa-api-tester\n──────────────────\nParse Swagger\nBuild Postman collection\nRun Newman CLI\nImport results"]
     end
-
-    subgraph TCW["qa-tc-writer"]
-        T["Write TCs per module · 2-round gap check\nImport to TestRail · create sprint run"]
-    end
-
-    subgraph SCR["qa-script-writer"]
-        S["Bootstrap npm + config\nExplore site · write specs from TCs\nRun · flakiness check · CI yaml"]
-    end
-
-    subgraph API["qa-api-tester"]
-        A["Parse Swagger · build Postman collection\nRun Newman CLI · import results"]
-    end
-
-    TCW -->|"TC-READY: module"| SCR
-    TCW -->|"SECTION-DONE: case_ids"| HAWK
-    TCW -->|"META: testrail_run_id"| HAWK
-
-    HAWK & TCW & SCR & API -->|"DONE signal"| P3
-    P4 -->|"sign-off report"| USER
 
     BUS[["qa/shared-task-list.txt\nall agent signals pass through here"]]
-    TCW & HAWK & SCR & API -. writes/reads .-> BUS
+    P3["Phase 3 · Consolidation\npush bugs · Jira updates · trigger retests"]
+    P4["Phase 4 · Sign-off Report\nPASS / CONDITIONAL / FAIL"]
+
+    USER -->|"/qa-lead + doc link or paste"| P0
+    P0 -->|"preflight blocked"| ERR
+    P0 -->|"preflight OK"| P1
+    P1 -->|"user types proceed"| SPAWN
+    SPAWN --> PARALLEL
+
+    TCW -->|"TC-READY: module"| SCR
+    TCW -->|"SECTION-DONE: case_ids\nMETA: testrail_run_id"| HAWK
+
+    HAWK & TCW & SCR & API -. writes/reads .-> BUS
+    PARALLEL -->|"DONE signals"| P3
+    P3 --> P4
+    P4 -->|"sign-off report"| USER
 
     classDef user fill:#6366f1,stroke:#4338ca,color:#fff,font-weight:bold
     classDef phase fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
@@ -78,17 +66,13 @@ flowchart TD
     class P0,P1,P3,P4 phase
     class ERR error
     class SPAWN spawn
-    class H hawk
-    class T tcw
-    class S scr
-    class A api
+    class HAWK hawk
+    class TCW tcw
+    class SCR scr
+    class API api
     class BUS bus
 
-    style LEAD fill:#0f172a,stroke:#475569,color:#94a3b8
-    style HAWK fill:#1c0a00,stroke:#f97316,color:#ffedd5
-    style TCW fill:#0a0f1e,stroke:#3b82f6,color:#dbeafe
-    style SCR fill:#021a0a,stroke:#4ade80,color:#dcfce7
-    style API fill:#1a0533,stroke:#c084fc,color:#f3e8ff
+    style PARALLEL fill:#0f172a,stroke:#475569,color:#94a3b8
 ```
 
 ---
