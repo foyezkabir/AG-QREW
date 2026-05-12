@@ -63,6 +63,32 @@ flowchart TD
 
     BUS[["qa/shared-task-list.txt\nall agent signals pass through here"]]
     TCW & HAWK & SCR & API -. writes/reads .-> BUS
+
+    classDef user fill:#6366f1,stroke:#4338ca,color:#fff,font-weight:bold
+    classDef phase fill:#1e3a5f,stroke:#3b82f6,color:#bfdbfe
+    classDef error fill:#7f1d1d,stroke:#ef4444,color:#fee2e2
+    classDef spawn fill:#713f12,stroke:#f59e0b,color:#fef3c7,font-weight:bold
+    classDef hawk fill:#431407,stroke:#f97316,color:#ffedd5
+    classDef tcw fill:#172554,stroke:#60a5fa,color:#dbeafe
+    classDef scr fill:#052e16,stroke:#4ade80,color:#dcfce7
+    classDef api fill:#3b0764,stroke:#c084fc,color:#f3e8ff
+    classDef bus fill:#1c1917,stroke:#78716c,color:#d6d3d1
+
+    class USER user
+    class P0,P1,P3,P4 phase
+    class ERR error
+    class SPAWN spawn
+    class H hawk
+    class T tcw
+    class S scr
+    class A api
+    class BUS bus
+
+    style LEAD fill:#0f172a,stroke:#475569,color:#94a3b8
+    style HAWK fill:#1c0a00,stroke:#f97316,color:#ffedd5
+    style TCW fill:#0a0f1e,stroke:#3b82f6,color:#dbeafe
+    style SCR fill:#021a0a,stroke:#4ade80,color:#dcfce7
+    style API fill:#1a0533,stroke:#c084fc,color:#f3e8ff
 ```
 
 ---
