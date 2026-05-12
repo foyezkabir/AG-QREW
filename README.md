@@ -18,38 +18,51 @@ AG-QREW is a team of five specialised AI agents that coordinate through a shared
 
 ## Architecture
 
-```
-                          USER
-                            │
-                            │  /qa-lead  (start sprint)
-                            ▼
-                    ┌───────────────┐
-                    │   QA Lead     │  ← only agent that talks to user
-                    │ (orchestrator)│
-                    └──────┬────────┘
-                           │ spawns all agents at once (Phase 2)
-          ┌────────────────┼────────────────────┐
-          │                │                    │
-          ▼                ▼                    ▼
-  ┌──────────────┐ ┌──────────────┐  ┌──────────────────┐
-  │ qa-tc-writer │ │qa-script-    │  │  qa-api-tester   │
-  │              │ │writer        │  │                  │
-  │ Test cases   │ │ Playwright   │  │ Postman/Newman   │
-  │ → TestRail   │ │ automation   │  │ API tests        │
-  └──────────────┘ └──────────────┘  └──────────────────┘
-          │                │
-          │ TC-READY signal│
-          └───────┐        │
-                  ▼        ▼
-           ┌─────────────────┐
-           │    qa-hawk      │
-           │                 │
-           │ Smoke + explore │
-           │ → TestRail      │
-           │ → Bug report    │
-           └─────────────────┘
+```mermaid
+flowchart TD
+    USER([User]) -->|"/qa-lead + doc link or paste"| LEAD
 
-  All agents coordinate via:  qa/shared-task-list.txt
+    subgraph LEAD["QA Lead - orchestrator - only agent that talks to user"]
+        P0["Phase 0: Setup\n.env check · doc intake · Atlassian auth · browser preflight"]
+        P1["Phase 1: Test Plan\ngap analysis · SFDIPOT plan · self-verify · present to user"]
+        P3["Phase 3: Consolidation\npush bugs · Jira updates · trigger retests"]
+        P4["Phase 4: Sign-off Report\nPASS / CONDITIONAL / FAIL"]
+        P0 --> P1
+        P3 --> P4
+    end
+
+    P0 -->|"preflight blocked"| ERR(["Surface to user\nadd Playwright MCP permissions"])
+    P1 -->|"user types 'proceed'"| SPAWN
+
+    SPAWN(["Spawn all agents\none message · fire simultaneously"])
+
+    SPAWN --> HAWK & TCW & SCR & API
+
+    subgraph HAWK["qa-hawk"]
+        H["Mode 0: Environment check\nMode 1: Smoke per module\nMode 2: SFDIPOT explore + bug log"]
+    end
+
+    subgraph TCW["qa-tc-writer"]
+        T["Write TCs per module · 2-round gap check\nImport to TestRail · create sprint run"]
+    end
+
+    subgraph SCR["qa-script-writer"]
+        S["Bootstrap npm + config\nExplore site · write specs from TCs\nRun · flakiness check · CI yaml"]
+    end
+
+    subgraph API["qa-api-tester"]
+        A["Parse Swagger · build Postman collection\nRun Newman CLI · import results"]
+    end
+
+    TCW -->|"TC-READY: module"| SCR
+    TCW -->|"SECTION-DONE: case_ids"| HAWK
+    TCW -->|"META: testrail_run_id"| HAWK
+
+    HAWK & TCW & SCR & API -->|"DONE signal"| P3
+    P4 -->|"sign-off report"| USER
+
+    BUS[["qa/shared-task-list.txt\nall agent signals pass through here"]]
+    TCW & HAWK & SCR & API -. writes/reads .-> BUS
 ```
 
 ---
