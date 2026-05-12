@@ -4,7 +4,7 @@
 
 
 
-A multi-agent QA automation system built for Claude Code. Point it at a sprint release note or BRD, press go, and receive a fully executed test cycle: test cases in TestRail, Playwright scripts that run, bugs in Jira or Confluence, and a signed-off report — all without writing a single test manually.
+A multi-agent QA automation system built for Claude Code. Point it at any business document — Jira story, epic, BRD, PR, release note, or paste content directly — press go, and receive a fully executed test cycle: test cases in TestRail, Playwright scripts that run, bugs in Jira or Confluence, and a signed-off report — all without writing a single test manually.
 
 ---
 
@@ -62,7 +62,7 @@ AG-QREW is a team of five specialised AI agents that coordinate through a shared
 
 - Fetches sprint documentation from Confluence (or accepts pasted content)
 - Runs a Sprint Health Scan against Jira to score risk (LOW / MEDIUM / HIGH)
-- Analyses requirements for gaps (BRD/FRD) or changed features (release notes)
+- Analyses any business document for requirements gaps — Jira story, epic, BRD, PR, release note, or pasted content
 - Writes a full SFDIPOT test plan covering all in-scope modules
 - Creates the TestRail milestone, project, and suite
 - Spawns all agents simultaneously after plan approval
@@ -91,6 +91,47 @@ AG-QREW is a team of five specialised AI agents that coordinate through a shared
 - Creates the sprint TestRail run after all modules are imported
 
 **TC ID format:** `TC-001`, `TC-002`… per file. Simple sequential, no module prefix. TestRail assigns its own permanent IDs (C51094…) after import.
+
+```
+TC-001
+------
+Title:          Verify that the user is redirected to the dashboard after login
+Type:           Functional
+Priority:       High
+Preconditions:  User account exists and is active
+Steps:
+  1. Navigate to /login
+  2. Enter 'admin@test.com' in the Email field
+  3. Enter valid password in the Password field
+  4. Click the Sign In button
+Test Data:
+  - Email: admin@test.com
+  - Password: Test@1234
+Expected:
+  - Should redirect to /dashboard
+  - Should display the user's name in the header
+TestRail ID:    [pending]
+
+
+TC-002
+------
+Title:          Verify that an error message is shown when the password is incorrect
+Type:           Negative
+Priority:       High
+Preconditions:  User account exists
+Steps:
+  1. Navigate to /login
+  2. Enter 'admin@test.com' in the Email field
+  3. Enter 'wrongpassword' in the Password field
+  4. Click the Sign In button
+Test Data:
+  - Email: admin@test.com
+  - Password: wrongpassword
+Expected:
+  - Should display "Invalid email or password" below the form
+  - Should remain on the /login page
+TestRail ID:    [pending]
+```
 
 ---
 
@@ -175,7 +216,7 @@ Phase 0 — Setup (QA Lead, blocking)
   └── Sprint Health Scan — Jira signals → risk score (0-10 → LOW/MEDIUM/HIGH)
 
 Phase 1 — Test Plan (QA Lead, blocking)
-  ├── Gap analysis on BRD/FRD (if requirements document)
+  ├── Gap analysis on source document (Jira story, epic, BRD, PR, release note, or paste)
   ├── Write qa/test-plan-sprint{N}.txt (SFDIPOT coverage per module)
   ├── Self-verification round on the plan
   └── ▶ Present to user — wait for "proceed"
